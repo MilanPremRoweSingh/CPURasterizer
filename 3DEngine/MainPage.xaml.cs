@@ -37,7 +37,7 @@ namespace _3DEngine
             frontBuffer.Source = bmp;
 
             device = new Device(bmp);
-            meshes = await device.LoadJSONFileAsync("suzanne.babylon");
+            meshes = await device.LoadJSONFileAsync("Suzanne.babylon");
             camera.Position = new Vector3(0, 0, 10.0f);
             camera.Target = Vector3.Zero;
 
@@ -66,7 +66,7 @@ namespace _3DEngine
         {
             
             this.InitializeComponent();
-            Load();
+            Load(); //Loads the image into the bitmap dispaly linked to the image in the application
         }
     }
 }
