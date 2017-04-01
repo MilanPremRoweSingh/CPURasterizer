@@ -195,5 +195,93 @@ namespace _3DEngine
             }
             return meshes.ToArray();
         }
+
+        public void RasterizeTriangle(Vector3 pA, Vector3 pB, Vector3 pC, Color4 colour)
+        {
+            //We want pA to be on top (lowest Y), and pA.y < pB.Y <  pC.Y
+            if (pA.Y > pB.Y) //Swap pA and pB if pB is higher than pA
+            {
+                var temp = pB;
+                pB = pA;
+                pA = temp;
+            }
+            //Now pA is definitely higher than pB
+
+            if (pB.Y > pC.Y) //Swap pB and pC if pC is higher than pB
+            {
+                var temp = pC;
+                pC = pB;
+                pB = temp;
+            }
+            //Now pB is definitely higher than pB
+
+            if (pA.Y > pB.Y) //Swap pA and pB if pB is higher than pA
+            {
+                var temp = pB;
+                pB = pA;
+                pA = temp;
+            }
+            //Now pA is definitely the highest, pB the middle and pC the lowest
+
+            float dPAPB, dPAPC;
+
+            if (pB.Y-pA.Y > 0) // i.e. if not zero since pB-pA cannot be negative (pB is lower than pA guaranteed)
+            {
+                dPAPB = (pB.X - pA.X) / (pB.Y - pA.Y);
+            } else
+            {
+                dPAPB = 0;
+            }
+
+            if (pC.Y - pA.Y > 0) // i.e. if not zero since pB-pA cannot be negative (pB is lower than pA guaranteed)
+            {
+                dPAPC = (pC.X - pA.X) / (pC.Y - pA.Y);
+            }
+            else
+            {
+                dPAPC = 0;
+            }
+
+            if (dPAPB > dPAPC)
+            {
+                //Handle case where PB is on the left
+               for (var y = (int)pA.Y; y<= pC.Y; y++)
+                {
+                    if (y<pB.Y)
+                    {
+                        //Draw scan line in first half of triangle
+                        DrawScanLine(y, pA, pC, pA, pB, colour);
+                    } else
+                    {
+                        //Draw scan line in second half of triangle
+                        DrawScanLine(y, pA, pC, pB, pC, colour);
+                    }
+                }
+
+            } else
+            {
+                //Handle case where PB is on the right
+                for (var y = (int)pA.Y; y <= pC.Y; y++)
+                {
+                    if (y < pB.Y)
+                    {
+                        //Draw scan line in first half of triangle
+                        DrawScanLine(y,pA,pC,pA,pB,colour);
+                    }
+                    else
+                    {
+                        //Draw scan line in second half of triangle
+                        DrawScanLine(y, pA, pC, pB, pC, colour);
+                    }
+                }
+            }
+        }
+
+        public void DrawScanLine(float currY, Vector3 pLA, Vector3 pLB, Vector3 pRA, Vector3 pRB, Color4 colour)
+        {
+            //pLA, pLB define line on left. pRA, pRB define line on the right
+            int currX, endX;
+            
+        }
     }
 }
