@@ -28,13 +28,13 @@
     <AppXManifest Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\Core\AppxManifest.xml">
       <PackagePath>AppxManifest.xml</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2017-04-01T13:38:18.259</Modified>
+      <Modified>2017-04-01T16:39:13.160</Modified>
     </AppXManifest>
   </ItemGroup>
   <ItemGroup>
     <AppxPackagedFile Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\3DEngine.exe">
       <PackagePath>entrypoint\3DEngine.exe</PackagePath>
-      <Modified>2017-04-01T13:38:17.824</Modified>
+      <Modified>2017-04-01T16:39:12.942</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\Milan\.nuget\packages\Microsoft.CSharp\4.3.0\lib\netcore50\Microsoft.CSharp.dll">
       <PackagePath>Microsoft.CSharp.dll</PackagePath>
@@ -569,11 +569,11 @@
     <AppxPackagedFile Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\resources.pri">
       <PackagePath>resources.pri</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2017-04-01T06:44:31.663</Modified>
+      <Modified>2017-04-01T16:30:07.103</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\Core\3DEngine.exe">
       <PackagePath>3DEngine.exe</PackagePath>
-      <Modified>2017-04-01T13:38:18.247</Modified>
+      <Modified>2017-04-01T16:39:13.157</Modified>
     </AppxPackagedFile>
   </ItemGroup>
   <ItemGroup>

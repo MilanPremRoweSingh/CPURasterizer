@@ -41,14 +41,14 @@ namespace _3DEngine
             bitMap.Invalidate(); //Redraw bitmap
         }
 
-        public Vector2 ProjectTo2D(Vector3 point, Matrix transformation)
+        public Vector3 ProjectTo2D(Vector3 point, Matrix transformation)
         {
             var newPoint = Vector3.TransformCoordinate(point, transformation); // Make the transformation in 3D Space
 
             //2D space drawing on the screen has point (0,0) as top left of the screen, so convert from 3D space where we have centre of screen being (0,0,0) 
             var x = newPoint.X * bitMap.PixelWidth + bitMap.PixelWidth / 2.0f;
             var y = -newPoint.Y * bitMap.PixelHeight + bitMap.PixelHeight / 2.0f;
-            return new Vector2(x, y);
+            return new Vector3(x, y, point.Z);
         }
 
         public void PutPixel(int x, int y, Color4 colour)
@@ -61,11 +61,11 @@ namespace _3DEngine
             bkBuff[i + 3] = (byte)(colour.Alpha * 255);
         }
 
-        public bool DrawPoint(Vector2 point)
+        public bool DrawPoint(Vector2 point, Color4 colour)
         {
             if (point.X >= 0 && point.Y >= 0 && point.X < bitMap.PixelWidth && point.Y < bitMap.PixelHeight)
             {
-                PutPixel((int)point.X, (int)point.Y, new Color4(1.0f, 0.0f, 0.0f, 1.0f)); // Drawing a Blue point by default
+                PutPixel((int)point.X, (int)point.Y, colour); // Drawing a Blue point by default
             }
             return false; //Defaults to false if outside of screen params
         }
@@ -85,7 +85,7 @@ namespace _3DEngine
                                                            curr.Rot.Z) //roll
                                                            * Matrix.Translation(curr.Pos);
                 var transformMat = worldMat * viewMat * projMat; //Create world -> projection matrix
-
+                var faceIndex = 0;
                 foreach (var face in curr.Faces)
                 {
                     var vertexA = curr.Verts[face.A];
@@ -96,9 +96,9 @@ namespace _3DEngine
                     var pixelB = ProjectTo2D(vertexB, transformMat);
                     var pixelC = ProjectTo2D(vertexC, transformMat);
 
-                    DrawLineBresenham(pixelA, pixelB);
-                    DrawLineBresenham(pixelB, pixelC);
-                    DrawLineBresenham(pixelC, pixelA);
+                    var color = 0.25f + (faceIndex % curr.Faces.Length) * 0.75f / curr.Faces.Length;
+                    RasterizeTriangle(pixelA, pixelB, pixelC, new Color4(color, color, color, 1));
+                    faceIndex++;
                 }
             }
         }
@@ -110,7 +110,7 @@ namespace _3DEngine
             if (distance <= 1) { return; } // If no pixel between the two, don't draw anything
 
             Vector2 mid = pointA + (pointB - pointA) / 2;
-            DrawPoint(mid);
+            DrawPoint(mid, Color4.White);
             DrawLineRecursive(pointA, mid); //Recursively draw points
             DrawLineRecursive(mid, pointB);
         }
@@ -130,7 +130,7 @@ namespace _3DEngine
 
             while (true)
             {
-                DrawPoint(new Vector2(xA, yA));
+                DrawPoint(new Vector2(xA, yA), Color4.White);
                 if ((xA == xB) && (yA == yB)) { break; }
                 var deltaError = 2 * error;
                 if (deltaError > -dY) { error -= dY; xA += signX; }
@@ -209,9 +209,9 @@ namespace _3DEngine
 
             if (pB.Y > pC.Y) //Swap pB and pC if pC is higher than pB
             {
-                var temp = pC;
-                pC = pB;
-                pB = temp;
+                var temp = pB;
+                pB = pC;
+                pC = temp;
             }
             //Now pB is definitely higher than pB
 
@@ -225,10 +225,11 @@ namespace _3DEngine
 
             float dPAPB, dPAPC;
 
-            if (pB.Y-pA.Y > 0) // i.e. if not zero since pB-pA cannot be negative (pB is lower than pA guaranteed)
+            if (pB.Y - pA.Y > 0) // i.e. if not zero since pB-pA cannot be negative (pB is lower than pA guaranteed)
             {
                 dPAPB = (pB.X - pA.X) / (pB.Y - pA.Y);
-            } else
+            }
+            else
             {
                 dPAPB = 0;
             }
@@ -245,33 +246,35 @@ namespace _3DEngine
             if (dPAPB > dPAPC)
             {
                 //Handle case where PB is on the left
-               for (var y = (int)pA.Y; y<= pC.Y; y++)
+                for (var y = (int)pA.Y; y <= (int)pC.Y; y++)
                 {
-                    if (y<pB.Y)
+                    if (y < pB.Y)
                     {
                         //Draw scan line in first half of triangle
                         DrawScanLine(y, pA, pC, pA, pB, colour);
-                    } else
+                    }
+                    else
                     {
                         //Draw scan line in second half of triangle
                         DrawScanLine(y, pA, pC, pB, pC, colour);
                     }
                 }
 
-            } else
+            }
+            else
             {
                 //Handle case where PB is on the right
-                for (var y = (int)pA.Y; y <= pC.Y; y++)
+                for (var y = (int)pA.Y; y <= (int)pC.Y; y++)
                 {
                     if (y < pB.Y)
                     {
                         //Draw scan line in first half of triangle
-                        DrawScanLine(y,pA,pC,pA,pB,colour);
+                        DrawScanLine(y, pA, pB, pA, pC, colour);
                     }
                     else
                     {
                         //Draw scan line in second half of triangle
-                        DrawScanLine(y, pA, pC, pB, pC, colour);
+                        DrawScanLine(y, pB, pC, pA, pC, colour);
                     }
                 }
             }
@@ -280,8 +283,18 @@ namespace _3DEngine
         public void DrawScanLine(float currY, Vector3 pLA, Vector3 pLB, Vector3 pRA, Vector3 pRB, Color4 colour)
         {
             //pLA, pLB define line on left. pRA, pRB define line on the right
-            int currX, endX;
-            
+            int startX, endX;
+
+            var gradL = pLA.Y != pLB.Y ? (currY - pLA.Y) / (pLB.Y - pLA.Y) : 1; //How far down Left line is our y?
+            var gradR = pRA.Y != pRB.Y ? (currY - pRA.Y) / (pRB.Y - pRA.Y) : 1; //How far down Right line is our y?
+
+            startX = (int)(pLA.X + ((pLB.X - pLA.X) * (Math.Max(0, Math.Min(gradL, 1)))));
+            endX = (int)(pRA.X + ((pRB.X - pRA.X) * (Math.Max(0, Math.Min(gradR, 1)))));
+
+            for (var currX = startX; currX < endX; currX++)
+            {
+                DrawPoint(new Vector2(currX, currY), colour);
+            }
         }
     }
 }
