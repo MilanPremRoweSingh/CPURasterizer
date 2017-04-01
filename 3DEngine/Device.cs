@@ -1,6 +1,9 @@
 ﻿using Windows.UI.Xaml.Media.Imaging;
 using System.Runtime.InteropServices.WindowsRuntime;
 using SharpDX;
+using System;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace _3DEngine
 {
@@ -18,7 +21,7 @@ namespace _3DEngine
 
         public void Clear(byte r, byte g, byte b, byte a) //Clears the back buffer by setting it to a specific colour
         {
-            for(int i=0; i < bkBuff.Length; i += 4)
+            for (int i = 0; i < bkBuff.Length; i += 4)
             {
                 //Windows uses bgra nor rgba 
                 bkBuff[i + 2] = r;
@@ -55,7 +58,7 @@ namespace _3DEngine
             bkBuff[i + 2] = (byte)(colour.Red * 255);
             bkBuff[i + 1] = (byte)(colour.Green * 255); ;
             bkBuff[i] = (byte)(colour.Blue * 255); ;
-            bkBuff[i + 3] = (byte)(colour.Alpha* 255);
+            bkBuff[i + 3] = (byte)(colour.Alpha * 255);
         }
 
         public bool DrawPoint(Vector2 point)
@@ -93,23 +96,104 @@ namespace _3DEngine
                     var pixelB = ProjectTo2D(vertexB, transformMat);
                     var pixelC = ProjectTo2D(vertexC, transformMat);
 
-                    DrawLine(pixelA, pixelB);
-                    DrawLine(pixelB, pixelC);
-                    DrawLine(pixelC, pixelA);
+                    DrawLineBresenham(pixelA, pixelB);
+                    DrawLineBresenham(pixelB, pixelC);
+                    DrawLineBresenham(pixelC, pixelA);
                 }
             }
         }
 
-        public void DrawLine(Vector2 pointA, Vector2 pointB)
+        public void DrawLineRecursive(Vector2 pointA, Vector2 pointB)
         {
             var distance = (pointB - pointA).Length(); //Distance between points in pixels
 
-            if (distance <= 1){ return; } // If no pixel between the two, don't draw anything
+            if (distance <= 1) { return; } // If no pixel between the two, don't draw anything
 
             Vector2 mid = pointA + (pointB - pointA) / 2;
             DrawPoint(mid);
-            DrawLine(pointA, mid); //Recursively draw points
-            DrawLine(mid, pointB);
+            DrawLineRecursive(pointA, mid); //Recursively draw points
+            DrawLineRecursive(mid, pointB);
+        }
+
+        public void DrawLineBresenham(Vector2 pointA, Vector2 pointB) //Draw line using Bresenham algorithm
+        {
+            int xA = (int)pointA.X;
+            int yA = (int)pointA.Y;
+            int xB = (int)pointB.X;
+            int yB = (int)pointB.Y;
+
+            var dX = System.Math.Abs(xB - xA);
+            var dY = System.Math.Abs(yB - yA);
+            var signX = (xA < xB) ? 1 : -1;
+            var signY = (yA < yB) ? 1 : -1;
+            var error = dX - dY;
+
+            while (true)
+            {
+                DrawPoint(new Vector2(xA, yA));
+                if ((xA == xB) && (yA == yB)) { break; }
+                var deltaError = 2 * error;
+                if (deltaError > -dY) { error -= dY; xA += signX; }
+                if (deltaError < dX) { error += dX; yA += signY; }
+            }
+        }
+
+        public async Task<Mesh[]> LoadJSONFileAsync(string fileName) //Async allows await; This will load / parse the JSON file
+        {
+            var meshes = new List<Mesh>();
+            var file = await Windows.ApplicationModel.Package.Current.InstalledLocation.GetFileAsync(fileName);
+            var data = await Windows.Storage.FileIO.ReadTextAsync(file);
+            dynamic jsonObject = Newtonsoft.Json.JsonConvert.DeserializeObject(data);
+
+            for (var mI = 0; mI < jsonObject.meshes.Count; mI++)
+            {
+                var vertArray = jsonObject.meshes[mI].vertices;
+                var indexArray = jsonObject.meshes[mI].indices;
+
+                var uvCount = jsonObject.meshes[mI].uvCount.Value;
+                var vStep = 1; //Default value
+
+                //uvCount refers to number of texture coords/vertex
+                //We're jumping by 6,8,10 
+                switch ((int)uvCount)
+                {
+                    case 0:
+                        vStep = 6;
+                        break;
+                    case 1:
+                        vStep = 8;
+                        break;
+                    case 2:
+                        vStep = 10;
+                        break;
+
+                }
+
+                var vertCount = vertArray.Count / vStep;
+                var facesCount = indexArray.Count / 3;
+                var mesh = new Mesh(jsonObject.meshes[mI].name.Value, vertCount, facesCount);
+
+                for (var vI = 0; vI < vertCount; vI++)
+                {
+                    var x = (float)vertArray[vI * vStep].Value;
+                    var y = (float)vertArray[vI * vStep + 1].Value;
+                    var z = (float)vertArray[vI * vStep + 2].Value;
+                    mesh.Verts[vI] = new Vector3(x, y, z);
+                }
+
+                for (var fI = 0; fI < facesCount; fI++)
+                {
+                    var a = (int)indexArray[fI * 3].Value;
+                    var b = (int)indexArray[fI * 3 + 1].Value;
+                    var c = (int)indexArray[fI * 3 + 2].Value;
+                    mesh.Faces[fI] = new Face { A = a, B = b, C = c };
+                }
+
+                var pos = jsonObject.meshes[mI].position;
+                mesh.Pos = new Vector3((float)pos[0].Value, (float)pos[1].Value, (float)pos[2].Value);
+                meshes.Add(mesh);
+            }
+            return meshes.ToArray();
         }
     }
 }

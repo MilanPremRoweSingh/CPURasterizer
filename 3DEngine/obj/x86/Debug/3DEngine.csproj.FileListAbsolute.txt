@@ -214,3 +214,11 @@ c:\users\milan\documents\visual studio 2017\Projects\3DEngine\3DEngine\obj\x86\D
 c:\users\milan\documents\visual studio 2017\Projects\3DEngine\3DEngine\obj\x86\Debug\qualifiers.txt.intermediate
 c:\users\milan\documents\visual studio 2017\Projects\3DEngine\3DEngine\obj\x86\Debug\MultipleQualifiersPerDimensionFound.txt
 c:\users\milan\documents\visual studio 2017\Projects\3DEngine\3DEngine\obj\x86\Debug\ProjectArchitectures.txt
+C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\Newtonsoft.Json.dll
+C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\System.ComponentModel.Primitives.dll
+C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\System.ComponentModel.TypeConverter.dll
+C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\System.Runtime.Serialization.Formatters.dll
+C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\obj\x86\Debug\FxResources.System.ComponentModel.Primitives.SR.resw
+C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\obj\x86\Debug\FxResources.System.ComponentModel.TypeConverter.SR.resw
+C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\obj\x86\Debug\FxResources.System.Runtime.Serialization.Formatters.SR.resw
+C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\Suzanne.babylon
