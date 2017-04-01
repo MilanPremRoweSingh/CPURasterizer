@@ -11,12 +11,18 @@ namespace _3DEngine
     {
         private byte[] bkBuff; //This is the back buffer. Every cell is mapped to a pixel of the screen and willbe used to update the front buffer
         private WriteableBitmap bitMap; //This is the source we will be using for the front buffer (our XAML image control)
+        private readonly float[] zBuffer; //zBuffer to be used in z-buffering
+        private readonly int rendW; //Used in z-Buffering
+        private readonly int rendH; //Used in z-Buffering
 
         public Device(WriteableBitmap bitMap) //Constructor for our device
         {
             this.bitMap = bitMap; //Sets the bitMap
+            rendW = bitMap.PixelWidth;
+            rendH = bitMap.PixelHeight;
 
             bkBuff = new byte[bitMap.PixelWidth * bitMap.PixelHeight * 4]; // Creates our back buffer based on size of our bitmap. It is *4 since we must store a byte for R,G,B and A values
+            zBuffer = new float[bitMap.PixelWidth * bitMap.PixelHeight];
         }
 
         public void Clear(byte r, byte g, byte b, byte a) //Clears the back buffer by setting it to a specific colour
@@ -28,6 +34,11 @@ namespace _3DEngine
                 bkBuff[i + 1] = g;
                 bkBuff[i] = b;
                 bkBuff[i + 3] = a;
+            }
+
+            for (var i = 0; i < zBuffer.Length; i++)
+            {
+                zBuffer[i] = float.MaxValue; //Reset zBuffer
             }
         }
 
@@ -48,26 +59,35 @@ namespace _3DEngine
             //2D space drawing on the screen has point (0,0) as top left of the screen, so convert from 3D space where we have centre of screen being (0,0,0) 
             var x = newPoint.X * bitMap.PixelWidth + bitMap.PixelWidth / 2.0f;
             var y = -newPoint.Y * bitMap.PixelHeight + bitMap.PixelHeight / 2.0f;
-            return new Vector3(x, y, point.Z);
+            return (new Vector3(x, y, point.Z));
         }
 
-        public void PutPixel(int x, int y, Color4 colour)
+        public void PutPixel(int x, int y, float z, Color4 colour)
         {
-            var i = (x + y * bitMap.PixelWidth) * 4; //Calculate index in bkpBuff of (x,y)
+            var i = (x + y * rendW) ; //Calculate index in bkpBuff of (x,y)
+
+            if (zBuffer[i] < z)
+            {
+                return; // Discard
+            }
+            zBuffer[i] = z;
+
+            i *= 4; //index in bytes
 
             bkBuff[i + 2] = (byte)(colour.Red * 255);
             bkBuff[i + 1] = (byte)(colour.Green * 255); ;
             bkBuff[i] = (byte)(colour.Blue * 255); ;
             bkBuff[i + 3] = (byte)(colour.Alpha * 255);
+
+
         }
 
-        public bool DrawPoint(Vector2 point, Color4 colour)
+        public void DrawPoint(Vector3 point, Color4 color)
         {
             if (point.X >= 0 && point.Y >= 0 && point.X < bitMap.PixelWidth && point.Y < bitMap.PixelHeight)
             {
-                PutPixel((int)point.X, (int)point.Y, colour); // Drawing a Blue point by default
+                PutPixel((int)point.X, (int)point.Y, point.Z, color);
             }
-            return false; //Defaults to false if outside of screen params
         }
 
         public void Render(Camera camera, params Mesh[] meshes)
@@ -103,40 +123,7 @@ namespace _3DEngine
             }
         }
 
-        public void DrawLineRecursive(Vector2 pointA, Vector2 pointB)
-        {
-            var distance = (pointB - pointA).Length(); //Distance between points in pixels
-
-            if (distance <= 1) { return; } // If no pixel between the two, don't draw anything
-
-            Vector2 mid = pointA + (pointB - pointA) / 2;
-            DrawPoint(mid, Color4.White);
-            DrawLineRecursive(pointA, mid); //Recursively draw points
-            DrawLineRecursive(mid, pointB);
-        }
-
-        public void DrawLineBresenham(Vector2 pointA, Vector2 pointB) //Draw line using Bresenham algorithm
-        {
-            int xA = (int)pointA.X;
-            int yA = (int)pointA.Y;
-            int xB = (int)pointB.X;
-            int yB = (int)pointB.Y;
-
-            var dX = System.Math.Abs(xB - xA);
-            var dY = System.Math.Abs(yB - yA);
-            var signX = (xA < xB) ? 1 : -1;
-            var signY = (yA < yB) ? 1 : -1;
-            var error = dX - dY;
-
-            while (true)
-            {
-                DrawPoint(new Vector2(xA, yA), Color4.White);
-                if ((xA == xB) && (yA == yB)) { break; }
-                var deltaError = 2 * error;
-                if (deltaError > -dY) { error -= dY; xA += signX; }
-                if (deltaError < dX) { error += dX; yA += signY; }
-            }
-        }
+ 
 
         public async Task<Mesh[]> LoadJSONFileAsync(string fileName) //Async allows await; This will load / parse the JSON file
         {
@@ -291,10 +278,17 @@ namespace _3DEngine
             startX = (int)(pLA.X + ((pLB.X - pLA.X) * (Math.Max(0, Math.Min(gradL, 1)))));
             endX = (int)(pRA.X + ((pRB.X - pRA.X) * (Math.Max(0, Math.Min(gradR, 1)))));
 
+            float z1 = (pLA.Z + ((pLB.Z - pLA.Z) * (Math.Max(0, Math.Min(gradL, 1)))));
+            float z2 = (pRA.Z + ((pRB.Z - pRA.Z) * (Math.Max(0, Math.Min(gradR, 1)))));
+
             for (var currX = startX; currX < endX; currX++)
             {
-                DrawPoint(new Vector2(currX, currY), colour);
+                float gradZ = (float)((currX - startX) / (float)(endX - startX));
+                var currZ = (z1 + ((z2 - z1) * (Math.Max(0, Math.Min(gradZ, 1)))));
+                DrawPoint(new Vector3(currX, currY, currZ), colour);
             }
         }
+
     }
+
 }
