@@ -28,7 +28,7 @@ namespace _3DEngine
             }
         }
 
-        //Flush back buffer into our front buffer i.e. bitMap
+        //Writes back buffer into our front buffer i.e. bitMap
         public void Flush()
         {
             using (var stm = bitMap.PixelBuffer.AsStream())
@@ -65,6 +65,30 @@ namespace _3DEngine
                 PutPixel((int)point.X, (int)point.Y, new Color4(1.0f, 0.0f, 0.0f, 1.0f)); // Drawing a Blue point by default
             }
             return false; //Defaults to false if outside of screen params
+        }
+
+        public void Render(Camera camera, params Mesh[] meshes)
+        {
+            var viewMat = Matrix.LookAtLH(camera.Position, camera.Target, Vector3.UnitY);
+            var projMat = Matrix.PerspectiveFovRH(0.78f, //fov
+                                               (float)bitMap.PixelWidth / bitMap.PixelHeight, //aspect
+                                               0.01f, //znear
+                                               1.0f); //zfar
+
+            foreach (Mesh curr in meshes)
+            {
+                var worldMat = Matrix.RotationYawPitchRoll(curr.Rot.Y, //yaw
+                                                           curr.Rot.X, //pitch
+                                                           curr.Rot.Z) //roll
+                                                           * Matrix.Translation(curr.Pos);
+                var transformMat = worldMat * viewMat * projMat; //Create world -> projection matrix
+
+                foreach (var vertex in curr.Verts)
+                {
+                    var point = ProjectTo2D(vertex, transformMat);
+                    DrawPoint(point);
+                }
+            }
         }
     }
 }

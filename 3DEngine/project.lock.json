@@ -21962,17 +21962,14 @@
   },
   "project": {
     "restore": {
-      "projectUniqueName": "c:\\users\\milan\\documents\\visual studio 2017\\Projects\\3DEngine\\3DEngine\\3DEngine.csproj",
+      "projectUniqueName": "C:\\Users\\Milan\\Documents\\Visual Studio 2017\\Projects\\3DEngine\\3DEngine\\3DEngine.csproj",
       "projectName": "3DEngine",
-      "projectPath": "c:\\users\\milan\\documents\\visual studio 2017\\Projects\\3DEngine\\3DEngine\\3DEngine.csproj",
-      "projectJsonPath": "c:\\users\\milan\\documents\\visual studio 2017\\Projects\\3DEngine\\3DEngine\\project.json",
+      "projectPath": "C:\\Users\\Milan\\Documents\\Visual Studio 2017\\Projects\\3DEngine\\3DEngine\\3DEngine.csproj",
+      "projectJsonPath": "C:\\Users\\Milan\\Documents\\Visual Studio 2017\\Projects\\3DEngine\\3DEngine\\project.json",
       "projectStyle": "ProjectJson"
     },
     "dependencies": {
-      "Microsoft.NETCore.UniversalWindowsPlatform": {
-        "target": "Package",
-        "version": "[5.2.2, )"
-      }
+      "Microsoft.NETCore.UniversalWindowsPlatform": "5.2.2"
     },
     "frameworks": {
       "uap10.0": {}
