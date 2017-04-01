@@ -83,12 +83,33 @@ namespace _3DEngine
                                                            * Matrix.Translation(curr.Pos);
                 var transformMat = worldMat * viewMat * projMat; //Create world -> projection matrix
 
-                foreach (var vertex in curr.Verts)
+                foreach (var face in curr.Faces)
                 {
-                    var point = ProjectTo2D(vertex, transformMat);
-                    DrawPoint(point);
+                    var vertexA = curr.Verts[face.A];
+                    var vertexB = curr.Verts[face.B];
+                    var vertexC = curr.Verts[face.C];
+
+                    var pixelA = ProjectTo2D(vertexA, transformMat);
+                    var pixelB = ProjectTo2D(vertexB, transformMat);
+                    var pixelC = ProjectTo2D(vertexC, transformMat);
+
+                    DrawLine(pixelA, pixelB);
+                    DrawLine(pixelB, pixelC);
+                    DrawLine(pixelC, pixelA);
                 }
             }
+        }
+
+        public void DrawLine(Vector2 pointA, Vector2 pointB)
+        {
+            var distance = (pointB - pointA).Length(); //Distance between points in pixels
+
+            if (distance <= 1){ return; } // If no pixel between the two, don't draw anything
+
+            Vector2 mid = pointA + (pointB - pointA) / 2;
+            DrawPoint(mid);
+            DrawLine(pointA, mid); //Recursively draw points
+            DrawLine(mid, pointB);
         }
     }
 }
