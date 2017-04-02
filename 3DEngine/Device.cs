@@ -59,7 +59,7 @@ namespace _3DEngine
             //2D space drawing on the screen has point (0,0) as top left of the screen, so convert from 3D space where we have centre of screen being (0,0,0) 
             var x = newPoint.X * bitMap.PixelWidth + bitMap.PixelWidth / 2.0f;
             var y = -newPoint.Y * bitMap.PixelHeight + bitMap.PixelHeight / 2.0f;
-            return (new Vector3(x, y, point.Z));
+            return (new Vector3(x, y, newPoint.Z));
         }
 
         public void PutPixel(int x, int y, float z, Color4 colour)
@@ -93,7 +93,7 @@ namespace _3DEngine
         public void Render(Camera camera, params Mesh[] meshes)
         {
             var viewMat = Matrix.LookAtLH(camera.Position, camera.Target, Vector3.UnitY);
-            var projMat = Matrix.PerspectiveFovRH(0.78f, //fov
+            var projMat = Matrix.PerspectiveFovLH(0.78f, //fov
                                                (float)bitMap.PixelWidth / bitMap.PixelHeight, //aspect
                                                0.01f, //znear
                                                1.0f); //zfar

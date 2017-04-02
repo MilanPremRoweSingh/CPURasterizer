@@ -53,7 +53,7 @@ namespace _3DEngine
             foreach (var mesh in meshes)
             {
                 // rotating slightly the cube during each frame rendered
-                mesh.Rot = new Vector3(mesh.Rot.X + 0.01f, mesh.Rot.Y + 0.01f, mesh.Rot.Z);
+                mesh.Rot = new Vector3(mesh.Rot.X, mesh.Rot.Y + 0.01f, mesh.Rot.Z);
             }
             // Doing the various matrix operations
             device.Render(camera, meshes);
