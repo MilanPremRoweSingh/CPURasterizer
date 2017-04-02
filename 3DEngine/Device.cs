@@ -12,6 +12,7 @@ namespace _3DEngine
         private byte[] bkBuff; //This is the back buffer. Every cell is mapped to a pixel of the screen and willbe used to update the front buffer
         private WriteableBitmap bitMap; //This is the source we will be using for the front buffer (our XAML image control)
         private readonly float[] zBuffer; //zBuffer to be used in z-buffering
+        private object[] lockBuffer; //Used to ensure we don't try to edit the same pixel on the parallel for in Render
         private readonly int rendW; //Used in z-Buffering
         private readonly int rendH; //Used in z-Buffering
 
@@ -21,8 +22,14 @@ namespace _3DEngine
             rendW = bitMap.PixelWidth;
             rendH = bitMap.PixelHeight;
 
-            bkBuff = new byte[bitMap.PixelWidth * bitMap.PixelHeight * 4]; // Creates our back buffer based on size of our bitmap. It is *4 since we must store a byte for R,G,B and A values
-            zBuffer = new float[bitMap.PixelWidth * bitMap.PixelHeight];
+            bkBuff = new byte[rendW * rendH * 4]; // Creates our back buffer based on size of our bitmap. It is *4 since we must store a byte for R,G,B and A values
+            zBuffer = new float[rendW * rendH];
+
+            lockBuffer = new object[rendW * rendH];
+            for (var i = 0; i < lockBuffer.Length; i++)
+            {
+                lockBuffer[i] = new object();
+            }
         }
 
         public void Clear(byte r, byte g, byte b, byte a) //Clears the back buffer by setting it to a specific colour
@@ -57,34 +64,35 @@ namespace _3DEngine
             var newPoint = Vector3.TransformCoordinate(point, transformation); // Make the transformation in 3D Space
 
             //2D space drawing on the screen has point (0,0) as top left of the screen, so convert from 3D space where we have centre of screen being (0,0,0) 
-            var x = newPoint.X * bitMap.PixelWidth + bitMap.PixelWidth / 2.0f;
-            var y = -newPoint.Y * bitMap.PixelHeight + bitMap.PixelHeight / 2.0f;
+            var x = newPoint.X * rendW + rendW / 2.0f;
+            var y = -newPoint.Y * rendH + rendH / 2.0f;
             return (new Vector3(x, y, newPoint.Z));
         }
 
         public void PutPixel(int x, int y, float z, Color4 colour)
         {
             var i = (x + y * rendW) ; //Calculate index in bkpBuff of (x,y)
-
-            if (zBuffer[i] < z)
+            lock (lockBuffer[i]) //Ensures we don't edit a pixel with the same i (i.e. position i.e. the same pixel in our Parallel for)
             {
-                return; // Discard
-            }
-            zBuffer[i] = z;
+                if (zBuffer[i] < z)
+                {
+                    return; // Discard
+                }
+                zBuffer[i] = z;
 
-            i *= 4; //index in bytes
+                i *= 4; //index in bytes
 
-            bkBuff[i + 2] = (byte)(colour.Red * 255);
-            bkBuff[i + 1] = (byte)(colour.Green * 255); ;
-            bkBuff[i] = (byte)(colour.Blue * 255); ;
-            bkBuff[i + 3] = (byte)(colour.Alpha * 255);
-
+                bkBuff[i + 2] = (byte)(colour.Red * 255);
+                bkBuff[i + 1] = (byte)(colour.Green * 255); ;
+                bkBuff[i] = (byte)(colour.Blue * 255); ;
+                bkBuff[i + 3] = (byte)(colour.Alpha * 255);
+            };
 
         }
 
         public void DrawPoint(Vector3 point, Color4 color)
         {
-            if (point.X >= 0 && point.Y >= 0 && point.X < bitMap.PixelWidth && point.Y < bitMap.PixelHeight)
+            if (point.X >= 0 && point.Y >= 0 && point.X < rendW && point.Y < rendH)
             {
                 PutPixel((int)point.X, (int)point.Y, point.Z, color);
             }
@@ -94,7 +102,7 @@ namespace _3DEngine
         {
             var viewMat = Matrix.LookAtLH(camera.Position, camera.Target, Vector3.UnitY);
             var projMat = Matrix.PerspectiveFovLH(0.78f, //fov
-                                               (float)bitMap.PixelWidth / bitMap.PixelHeight, //aspect
+                                               (float)rendW / rendH, //aspect
                                                0.01f, //znear
                                                1.0f); //zfar
 
@@ -105,21 +113,21 @@ namespace _3DEngine
                                                            curr.Rot.Z) //roll
                                                            * Matrix.Translation(curr.Pos);
                 var transformMat = worldMat * viewMat * projMat; //Create world -> projection matrix
-                var faceIndex = 0;
-                foreach (var face in curr.Faces)
-                {
-                    var vertexA = curr.Verts[face.A];
-                    var vertexB = curr.Verts[face.B];
-                    var vertexC = curr.Verts[face.C];
+                Parallel.For(0, curr.Faces.Length, faceIndex =>
+               {
+                   var face = curr.Faces[faceIndex];
+                   var vertexA = curr.Verts[face.A];
+                   var vertexB = curr.Verts[face.B];
+                   var vertexC = curr.Verts[face.C];
 
-                    var pixelA = ProjectTo2D(vertexA, transformMat);
-                    var pixelB = ProjectTo2D(vertexB, transformMat);
-                    var pixelC = ProjectTo2D(vertexC, transformMat);
+                   var pixelA = ProjectTo2D(vertexA, transformMat);
+                   var pixelB = ProjectTo2D(vertexB, transformMat);
+                   var pixelC = ProjectTo2D(vertexC, transformMat);
 
-                    var color = 0.25f + (faceIndex % curr.Faces.Length) * 0.75f / curr.Faces.Length;
-                    RasterizeTriangle(pixelA, pixelB, pixelC, new Color4(color, color, color, 1));
-                    faceIndex++;
-                }
+                   var color = 0.25f + (faceIndex % curr.Faces.Length) * 0.75f / curr.Faces.Length;
+                   RasterizeTriangle(pixelA, pixelB, pixelC, new Color4(color, color, color, 1));
+                   faceIndex++;
+               });
             }
         }
 
