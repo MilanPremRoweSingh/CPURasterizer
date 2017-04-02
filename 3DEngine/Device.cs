@@ -59,14 +59,20 @@ namespace _3DEngine
             bitMap.Invalidate(); //Redraw bitmap
         }
 
-        public Vector3 ProjectTo2D(Vector3 point, Matrix transformation)
+        public Vertex ProjectTo2D(Vertex vert, Matrix transformation, Matrix worldMat)
         {
-            var newPoint = Vector3.TransformCoordinate(point, transformation); // Make the transformation in 3D Space
-
+            var point2D = Vector3.TransformCoordinate(vert.Coords, transformation); // Make the transformation in 3D 
+            var point3dWorld = Vector3.TransformCoordinate(vert.Coords, worldMat);
+            var normal3dWorld = Vector3.TransformCoordinate(vert.Normal, worldMat);
             //2D space drawing on the screen has point (0,0) as top left of the screen, so convert from 3D space where we have centre of screen being (0,0,0) 
-            var x = newPoint.X * rendW + rendW / 2.0f;
-            var y = -newPoint.Y * rendH + rendH / 2.0f;
-            return (new Vector3(x, y, newPoint.Z));
+            var x = point2D.X * rendW + rendW / 2.0f;
+            var y = -point2D.Y * rendH + rendH / 2.0f;
+            return new Vertex
+            {
+                Coords = new Vector3(x, y, point2D.Z),
+                Normal = normal3dWorld,
+                WorldCoords = point3dWorld
+            };
         }
 
         public void PutPixel(int x, int y, float z, Color4 colour)
@@ -279,13 +285,17 @@ namespace _3DEngine
             }
         }
 
-        public void DrawScanLine(float currY, Vector3 pLA, Vector3 pLB, Vector3 pRA, Vector3 pRB, Color4 colour)
+        public void DrawScanLine(Vertex vLA, Vertex vLB, Vertex vRA, Vertex vRB, Color4 colour, ScanLineData data)
         {
+            Vector3 pLA = vLA.Coords;
+            Vector3 pLB = vLB.Coords;
+            Vector3 pRA = vRA.Coords;
+            Vector3 pRB = vRB.Coords;
             //pLA, pLB define line on left. pRA, pRB define line on the right
             int startX, endX;
 
-            var gradL = pLA.Y != pLB.Y ? (currY - pLA.Y) / (pLB.Y - pLA.Y) : 1; //How far down Left line is our y?
-            var gradR = pRA.Y != pRB.Y ? (currY - pRA.Y) / (pRB.Y - pRA.Y) : 1; //How far down Right line is our y?
+            var gradL = pLA.Y != pLB.Y ? (data.currentY - pLA.Y) / (pLB.Y - pLA.Y) : 1; //How far down Left line is our y?
+            var gradR = pRA.Y != pRB.Y ? (data.currentY - pRA.Y) / (pRB.Y - pRA.Y) : 1; //How far down Right line is our y?
 
             startX = (int)(pLA.X + ((pLB.X - pLA.X) * (Math.Max(0, Math.Min(gradL, 1)))));
             endX = (int)(pRA.X + ((pRB.X - pRA.X) * (Math.Max(0, Math.Min(gradR, 1)))));
@@ -297,7 +307,10 @@ namespace _3DEngine
             {
                 float gradZ = (float)((currX - startX) / (float)(endX - startX));
                 var currZ = (z1 + ((z2 - z1) * (Math.Max(0, Math.Min(gradZ, 1)))));
-                DrawPoint(new Vector3(currX, currY, currZ), colour);
+
+                var ndotl = data.ndotla;
+
+                DrawPoint(new Vector3(currX, data.currentY, currZ), colour*ndotl);
             }
         }
 
