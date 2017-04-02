@@ -131,7 +131,7 @@ namespace _3DEngine
                     var pixelB = ProjectTo2D(vertexB, transformMat, worldMat);
                     var pixelC = ProjectTo2D(vertexC, transformMat, worldMat);
 
-                    var color = 0.1f;
+                    var color = 1.0f;
                     RasterizeTriangle(pixelA, pixelB, pixelC, new Color4(color, color, color, 1), curr.Texture);
                     faceIndex++;
                 });
@@ -342,9 +342,12 @@ namespace _3DEngine
                 if (texture != null)
                     textureColor = texture.Map(u, v);
                 else
-                    textureColor = new Color4(0.01f, 0.01f, 0.01f, 1);
+                    textureColor = new Color4(1.0f, 1.0f, 1.0f, 1);
 
-                DrawPoint(new Vector3(currX, data.currentY, currZ), colour * textureColor * ndotl);
+                DrawPoint(new Vector3(currX, data.currentY, currZ), (new Color4(colour.Red*textureColor.Red * ndotl,
+                                                                                colour.Green * textureColor.Green * ndotl,
+                                                                                colour.Blue * textureColor.Blue * ndotl,
+                                                                                1)));
             }
         }
 
@@ -355,7 +358,7 @@ namespace _3DEngine
 
         public float ComputeNDotL(Vector3 vert, Vector3 norm, Vector3 lightPos)
         {
-            var lightDir = lightPos - vert; //direction from light to vertex
+            var lightDir = vert - lightPos; //direction from light to vertex
 
             norm.Normalize(); //Normalise normal
             lightDir.Normalize(); //Normalise lightDir

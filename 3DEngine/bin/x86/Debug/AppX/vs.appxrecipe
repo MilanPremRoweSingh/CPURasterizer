@@ -28,13 +28,13 @@
     <AppXManifest Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\Core\AppxManifest.xml">
       <PackagePath>AppxManifest.xml</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2017-04-02T23:09:12.766</Modified>
+      <Modified>2017-04-02T23:27:26.326</Modified>
     </AppXManifest>
   </ItemGroup>
   <ItemGroup>
     <AppxPackagedFile Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\3DEngine.exe">
       <PackagePath>entrypoint\3DEngine.exe</PackagePath>
-      <Modified>2017-04-02T23:09:12.547</Modified>
+      <Modified>2017-04-02T23:27:26.118</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\Milan\.nuget\packages\Microsoft.CSharp\4.3.0\lib\netcore50\Microsoft.CSharp.dll">
       <PackagePath>Microsoft.CSharp.dll</PackagePath>
@@ -514,7 +514,7 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\Suzanne.babylon">
       <PackagePath>Suzanne.babylon</PackagePath>
-      <Modified>2017-04-02T23:03:16.518</Modified>
+      <Modified>2017-04-02T23:12:02.293</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\Suzanne.jpg">
       <PackagePath>Suzanne.jpg</PackagePath>
@@ -577,7 +577,7 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\Core\3DEngine.exe">
       <PackagePath>3DEngine.exe</PackagePath>
-      <Modified>2017-04-02T23:09:12.763</Modified>
+      <Modified>2017-04-02T23:27:26.322</Modified>
     </AppxPackagedFile>
   </ItemGroup>
   <ItemGroup>
