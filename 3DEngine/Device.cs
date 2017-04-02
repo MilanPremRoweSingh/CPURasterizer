@@ -130,7 +130,7 @@ namespace _3DEngine
                    var pixelB = ProjectTo2D(vertexB, transformMat, worldMat);
                    var pixelC = ProjectTo2D(vertexC, transformMat, worldMat);
 
-                   var color = 1.0f;
+                   var color = 0.0001f;
                    RasterizeTriangle(pixelA, pixelB, pixelC, new Color4(color, color, color, 1));
                    faceIndex++;
                });
@@ -169,14 +169,15 @@ namespace _3DEngine
             Vector3 pC = vC.Coords;
 
             //Compute face normal
-            Vector3 vNormFace = ((vA.Normal + vB.Normal + vC.Normal) / 3); //Face normal is average of 3 vertex normals
-            Vector3 faceCentre = ((vA.WorldCoords + vB.WorldCoords + vC.WorldCoords) / 3); //Middle point of face is avg of 3 vertex word pos
+            //Vector3 vNormFace = ((vA.Normal + vB.Normal + vC.Normal) / 3); //Face normal is average of 3 vertex normals
+            //Vector3 faceCentre = ((vA.WorldCoords + vB.WorldCoords + vC.WorldCoords) / 3); //Middle point of face is avg of 3 vertex word pos
 
-            Vector3 lightPos = new Vector3(0, 10, 10); //Light position
-
-            //Compute cosine of angle between normal and light and store it in ScanLineStruct
-            float ndotl = ComputeNDotL(faceCentre, vNormFace, lightPos);
-            var data = new ScanLineData { ndotla = ndotl};
+            Vector3 lightPos = new Vector3(0, -10, 10); //Light position
+            //Compute the cosing of angles between vertex normals and light
+            float vnlA = ComputeNDotL(vA.WorldCoords, vA.Normal, lightPos);
+            float vnlB = ComputeNDotL(vB.WorldCoords, vB.Normal, lightPos);
+            float vnlC = ComputeNDotL(vC.WorldCoords, vC.Normal, lightPos);
+            var data = new ScanLineData {};
 
             float dPAPB, dPAPC;
 
@@ -206,13 +207,21 @@ namespace _3DEngine
                     data.currentY = y;
                     if (y < pB.Y)
                     {
+                        data.ndotla = vnlA;
+                        data.ndotlb = vnlC;
+                        data.ndotlc = vnlA;
+                        data.ndotld = vnlB;
                         //Draw scan line in first half of triangle
                         DrawScanLine(vA, vC, vA, vB, colour, data);
                     }
                     else
                     {
+                        data.ndotla = vnlA;
+                        data.ndotlb = vnlC;
+                        data.ndotlc = vnlB;
+                        data.ndotld = vnlC;
                         //Draw scan line in second half of triangle
-                        DrawScanLine(vA, vC, vA, vB, colour, data);
+                        DrawScanLine(vA, vC, vB, vC, colour, data);
                     }
                 }
 
@@ -225,11 +234,19 @@ namespace _3DEngine
                     data.currentY = y;
                     if (y < pB.Y)
                     {
+                        data.ndotla = vnlA;
+                        data.ndotlb = vnlB;
+                        data.ndotlc = vnlA;
+                        data.ndotld = vnlC;
                         //Draw scan line in first half of triangle
                         DrawScanLine(vA, vB, vA, vC, colour, data);
                     }
                     else
                     {
+                        data.ndotla = vnlB;
+                        data.ndotlb = vnlC;
+                        data.ndotlc = vnlA;
+                        data.ndotld = vnlC;
                         //Draw scan line in second half of triangle
                         DrawScanLine(vB, vC, vA, vC, colour, data);
                     }
@@ -255,12 +272,15 @@ namespace _3DEngine
             float z1 = (pLA.Z + ((pLB.Z - pLA.Z) * (Math.Max(0, Math.Min(gradL, 1)))));
             float z2 = (pRA.Z + ((pRB.Z - pRA.Z) * (Math.Max(0, Math.Min(gradR, 1)))));
 
+            var startLN = (data.ndotla + ((data.ndotlb - data.ndotla) * (Math.Max(0, Math.Min(gradL, 1)))));
+            var endLN = (data.ndotlc + ((data.ndotld - data.ndotlc) * (Math.Max(0, Math.Min(gradR, 1)))));
+
             for (var currX = startX; currX < endX; currX++)
             {
                 float gradZ = (float)((currX - startX) / (float)(endX - startX));
                 var currZ = (z1 + ((z2 - z1) * (Math.Max(0, Math.Min(gradZ, 1)))));
 
-                var ndotl = data.ndotla;
+                var ndotl = (startLN + ((endLN - startLN) * (Math.Max(0, Math.Min(gradZ, 1)))));
 
                 DrawPoint(new Vector3(currX, data.currentY, currZ), colour*ndotl);
             }
