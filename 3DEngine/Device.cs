@@ -59,14 +59,20 @@ namespace _3DEngine
             bitMap.Invalidate(); //Redraw bitmap
         }
 
-        public Vector3 ProjectTo2D(Vector3 point, Matrix transformation)
+        public Vertex ProjectTo2D(Vertex vert, Matrix transformation, Matrix worldMat)
         {
-            var newPoint = Vector3.TransformCoordinate(point, transformation); // Make the transformation in 3D Space
-
+            var point2D = Vector3.TransformCoordinate(vert.Coords, transformation); // Make the transformation in 3D 
+            var point3dWorld = Vector3.TransformCoordinate(vert.Coords, worldMat);
+            var normal3dWorld = Vector3.TransformCoordinate(vert.Normal, worldMat);
             //2D space drawing on the screen has point (0,0) as top left of the screen, so convert from 3D space where we have centre of screen being (0,0,0) 
-            var x = newPoint.X * rendW + rendW / 2.0f;
-            var y = -newPoint.Y * rendH + rendH / 2.0f;
-            return (new Vector3(x, y, newPoint.Z));
+            var x = point2D.X * rendW + rendW / 2.0f;
+            var y = -point2D.Y * rendH + rendH / 2.0f;
+            return new Vertex
+            {
+                Coords = new Vector3(x, y, point2D.Z),
+                Normal = normal3dWorld,
+                WorldCoords = point3dWorld
+            };
         }
 
         public void PutPixel(int x, int y, float z, Color4 colour)
@@ -120,18 +126,155 @@ namespace _3DEngine
                    var vertexB = curr.Verts[face.B];
                    var vertexC = curr.Verts[face.C];
 
-                   var pixelA = ProjectTo2D(vertexA, transformMat);
-                   var pixelB = ProjectTo2D(vertexB, transformMat);
-                   var pixelC = ProjectTo2D(vertexC, transformMat);
+                   var pixelA = ProjectTo2D(vertexA, transformMat, worldMat);
+                   var pixelB = ProjectTo2D(vertexB, transformMat, worldMat);
+                   var pixelC = ProjectTo2D(vertexC, transformMat, worldMat);
 
-                   var color = 0.25f + (faceIndex % curr.Faces.Length) * 0.75f / curr.Faces.Length;
+                   var color = 1.0f;
                    RasterizeTriangle(pixelA, pixelB, pixelC, new Color4(color, color, color, 1));
                    faceIndex++;
                });
             }
         }
 
- 
+        public void RasterizeTriangle(Vertex vA, Vertex vB, Vertex vC, Color4 colour)
+        {
+            //We want pA to be on top (lowest Y), and pA.y < pB.Y <  pC.Y
+            if (vA.Coords.Y > vB.Coords.Y) //Swap vectors if vB is higher
+            {
+                var temp = vB;
+                vB = vA;
+                vA = temp;
+            }
+            //Now vA is definitely higher than vB
+
+            if (vB.Coords.Y > vC.Coords.Y) //Swap vectors if vC is higher
+            {
+                var temp = vB;
+                vB = vC;
+                vC = temp;
+            }
+            //Now vB is definitely higher than vB
+
+            if (vA.Coords.Y > vB.Coords.Y) //Swap vectors if vB is higher
+            {
+                var temp = vB;
+                vB = vA;
+                vA = temp;
+            }
+            //Now vA is definitely the highest, vB the middle and vC the lowest
+
+            Vector3 pA = vA.Coords;
+            Vector3 pB = vB.Coords;
+            Vector3 pC = vC.Coords;
+
+            //Compute face normal
+            Vector3 vNormFace = ((vA.Normal + vB.Normal + vC.Normal) / 3); //Face normal is average of 3 vertex normals
+            Vector3 faceCentre = ((vA.WorldCoords + vB.WorldCoords + vC.WorldCoords) / 3); //Middle point of face is avg of 3 vertex word pos
+
+            Vector3 lightPos = new Vector3(0, 10, 10); //Light position
+
+            //Compute cosine of angle between normal and light and store it in ScanLineStruct
+            float ndotl = ComputeNDotL(faceCentre, vNormFace, lightPos);
+            var data = new ScanLineData { ndotla = ndotl};
+
+            float dPAPB, dPAPC;
+
+            if (pB.Y - pA.Y > 0) // i.e. if not zero since pB-pA cannot be negative (pB is lower than pA guaranteed)
+            {
+                dPAPB = (pB.X - pA.X) / (pB.Y - pA.Y);
+            }
+            else
+            {
+                dPAPB = 0;
+            }
+
+            if (pC.Y - pA.Y > 0) // i.e. if not zero since pB-pA cannot be negative (pB is lower than pA guaranteed)
+            {
+                dPAPC = (pC.X - pA.X) / (pC.Y - pA.Y);
+            }
+            else
+            {
+                dPAPC = 0;
+            }
+
+            if (dPAPB > dPAPC)
+            {
+                //Handle case where PB is on the left
+                for (var y = (int)pA.Y; y <= (int)pC.Y; y++)
+                { 
+                    data.currentY = y;
+                    if (y < pB.Y)
+                    {
+                        //Draw scan line in first half of triangle
+                        DrawScanLine(vA, vC, vA, vB, colour, data);
+                    }
+                    else
+                    {
+                        //Draw scan line in second half of triangle
+                        DrawScanLine(vA, vC, vA, vB, colour, data);
+                    }
+                }
+
+            }
+            else
+            {
+                //Handle case where PB is on the right
+                for (var y = (int)pA.Y; y <= (int)pC.Y; y++)
+                {
+                    data.currentY = y;
+                    if (y < pB.Y)
+                    {
+                        //Draw scan line in first half of triangle
+                        DrawScanLine(vA, vB, vA, vC, colour, data);
+                    }
+                    else
+                    {
+                        //Draw scan line in second half of triangle
+                        DrawScanLine(vB, vC, vA, vC, colour, data);
+                    }
+                }
+            }
+        }
+
+        public void DrawScanLine(Vertex vLA, Vertex vLB, Vertex vRA, Vertex vRB, Color4 colour, ScanLineData data)
+        {
+            Vector3 pLA = vLA.Coords;
+            Vector3 pLB = vLB.Coords;
+            Vector3 pRA = vRA.Coords;
+            Vector3 pRB = vRB.Coords;
+            //pLA, pLB define line on left. pRA, pRB define line on the right
+            int startX, endX;
+
+            var gradL = pLA.Y != pLB.Y ? (data.currentY - pLA.Y) / (pLB.Y - pLA.Y) : 1; //How far down Left line is our y?
+            var gradR = pRA.Y != pRB.Y ? (data.currentY - pRA.Y) / (pRB.Y - pRA.Y) : 1; //How far down Right line is our y?
+
+            startX = (int)(pLA.X + ((pLB.X - pLA.X) * (Math.Max(0, Math.Min(gradL, 1)))));
+            endX = (int)(pRA.X + ((pRB.X - pRA.X) * (Math.Max(0, Math.Min(gradR, 1)))));
+
+            float z1 = (pLA.Z + ((pLB.Z - pLA.Z) * (Math.Max(0, Math.Min(gradL, 1)))));
+            float z2 = (pRA.Z + ((pRB.Z - pRA.Z) * (Math.Max(0, Math.Min(gradR, 1)))));
+
+            for (var currX = startX; currX < endX; currX++)
+            {
+                float gradZ = (float)((currX - startX) / (float)(endX - startX));
+                var currZ = (z1 + ((z2 - z1) * (Math.Max(0, Math.Min(gradZ, 1)))));
+
+                var ndotl = data.ndotla;
+
+                DrawPoint(new Vector3(currX, data.currentY, currZ), colour*ndotl);
+            }
+        }
+
+        public float ComputeNDotL(Vector3 vert, Vector3 norm, Vector3 lightPos)
+        {
+            var lightDir = lightPos - vert; //direction from light to vertex
+
+            norm.Normalize(); //Normalise normal
+            lightDir.Normalize(); //Normalise lightDir
+
+            return Math.Max(0, Vector3.Dot(norm, lightDir)); //Compute Dot and return
+        }
 
         public async Task<Mesh[]> LoadJSONFileAsync(string fileName) //Async allows await; This will load / parse the JSON file
         {
@@ -173,7 +316,11 @@ namespace _3DEngine
                     var x = (float)vertArray[vI * vStep].Value;
                     var y = (float)vertArray[vI * vStep + 1].Value;
                     var z = (float)vertArray[vI * vStep + 2].Value;
-                    mesh.Verts[vI] = new Vector3(x, y, z);
+                    // Loading the vertex normal exported by Blender
+                    var nx = (float)vertArray[vI * vStep + 3].Value;
+                    var ny = (float)vertArray[vI * vStep + 4].Value;
+                    var nz = (float)vertArray[vI * vStep + 5].Value;
+                    mesh.Verts[vI] = new Vertex { Coords = new Vector3(x, y, z), Normal = new Vector3(nx, ny, nz) };
                 }
 
                 for (var fI = 0; fI < facesCount; fI++)
@@ -191,112 +338,7 @@ namespace _3DEngine
             return meshes.ToArray();
         }
 
-        public void RasterizeTriangle(Vector3 pA, Vector3 pB, Vector3 pC, Color4 colour)
-        {
-            //We want pA to be on top (lowest Y), and pA.y < pB.Y <  pC.Y
-            if (pA.Y > pB.Y) //Swap pA and pB if pB is higher than pA
-            {
-                var temp = pB;
-                pB = pA;
-                pA = temp;
-            }
-            //Now pA is definitely higher than pB
-
-            if (pB.Y > pC.Y) //Swap pB and pC if pC is higher than pB
-            {
-                var temp = pB;
-                pB = pC;
-                pC = temp;
-            }
-            //Now pB is definitely higher than pB
-
-            if (pA.Y > pB.Y) //Swap pA and pB if pB is higher than pA
-            {
-                var temp = pB;
-                pB = pA;
-                pA = temp;
-            }
-            //Now pA is definitely the highest, pB the middle and pC the lowest
-
-            float dPAPB, dPAPC;
-
-            if (pB.Y - pA.Y > 0) // i.e. if not zero since pB-pA cannot be negative (pB is lower than pA guaranteed)
-            {
-                dPAPB = (pB.X - pA.X) / (pB.Y - pA.Y);
-            }
-            else
-            {
-                dPAPB = 0;
-            }
-
-            if (pC.Y - pA.Y > 0) // i.e. if not zero since pB-pA cannot be negative (pB is lower than pA guaranteed)
-            {
-                dPAPC = (pC.X - pA.X) / (pC.Y - pA.Y);
-            }
-            else
-            {
-                dPAPC = 0;
-            }
-
-            if (dPAPB > dPAPC)
-            {
-                //Handle case where PB is on the left
-                for (var y = (int)pA.Y; y <= (int)pC.Y; y++)
-                {
-                    if (y < pB.Y)
-                    {
-                        //Draw scan line in first half of triangle
-                        DrawScanLine(y, pA, pC, pA, pB, colour);
-                    }
-                    else
-                    {
-                        //Draw scan line in second half of triangle
-                        DrawScanLine(y, pA, pC, pB, pC, colour);
-                    }
-                }
-
-            }
-            else
-            {
-                //Handle case where PB is on the right
-                for (var y = (int)pA.Y; y <= (int)pC.Y; y++)
-                {
-                    if (y < pB.Y)
-                    {
-                        //Draw scan line in first half of triangle
-                        DrawScanLine(y, pA, pB, pA, pC, colour);
-                    }
-                    else
-                    {
-                        //Draw scan line in second half of triangle
-                        DrawScanLine(y, pB, pC, pA, pC, colour);
-                    }
-                }
-            }
-        }
-
-        public void DrawScanLine(float currY, Vector3 pLA, Vector3 pLB, Vector3 pRA, Vector3 pRB, Color4 colour)
-        {
-            //pLA, pLB define line on left. pRA, pRB define line on the right
-            int startX, endX;
-
-            var gradL = pLA.Y != pLB.Y ? (currY - pLA.Y) / (pLB.Y - pLA.Y) : 1; //How far down Left line is our y?
-            var gradR = pRA.Y != pRB.Y ? (currY - pRA.Y) / (pRB.Y - pRA.Y) : 1; //How far down Right line is our y?
-
-            startX = (int)(pLA.X + ((pLB.X - pLA.X) * (Math.Max(0, Math.Min(gradL, 1)))));
-            endX = (int)(pRA.X + ((pRB.X - pRA.X) * (Math.Max(0, Math.Min(gradR, 1)))));
-
-            float z1 = (pLA.Z + ((pLB.Z - pLA.Z) * (Math.Max(0, Math.Min(gradL, 1)))));
-            float z2 = (pRA.Z + ((pRB.Z - pRA.Z) * (Math.Max(0, Math.Min(gradR, 1)))));
-
-            for (var currX = startX; currX < endX; currX++)
-            {
-                float gradZ = (float)((currX - startX) / (float)(endX - startX));
-                var currZ = (z1 + ((z2 - z1) * (Math.Max(0, Math.Min(gradZ, 1)))));
-                DrawPoint(new Vector3(currX, currY, currZ), colour);
-            }
-        }
-
     }
+
 
 }
