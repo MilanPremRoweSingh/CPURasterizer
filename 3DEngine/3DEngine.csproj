@@ -93,6 +93,8 @@
     <Content Include="Suzanne.babylon">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Suzanne.jpg" />
+    <None Include="monkey.babylon" />
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
@@ -105,9 +107,11 @@
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Material.cs" />
     <Compile Include="Mesh.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ScanLineStruct.cs" />
+    <Compile Include="Texture.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
