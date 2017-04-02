@@ -28,13 +28,13 @@
     <AppXManifest Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\Core\AppxManifest.xml">
       <PackagePath>AppxManifest.xml</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2017-04-02T23:05:39.055</Modified>
+      <Modified>2017-04-02T23:09:12.766</Modified>
     </AppXManifest>
   </ItemGroup>
   <ItemGroup>
     <AppxPackagedFile Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\3DEngine.exe">
       <PackagePath>entrypoint\3DEngine.exe</PackagePath>
-      <Modified>2017-04-02T23:05:38.524</Modified>
+      <Modified>2017-04-02T23:09:12.547</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\Milan\.nuget\packages\Microsoft.CSharp\4.3.0\lib\netcore50\Microsoft.CSharp.dll">
       <PackagePath>Microsoft.CSharp.dll</PackagePath>
@@ -516,6 +516,10 @@
       <PackagePath>Suzanne.babylon</PackagePath>
       <Modified>2017-04-02T23:03:16.518</Modified>
     </AppxPackagedFile>
+    <AppxPackagedFile Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\Suzanne.jpg">
+      <PackagePath>Suzanne.jpg</PackagePath>
+      <Modified>2013-07-12T17:32:50.000</Modified>
+    </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\Assets\2.jpg">
       <PackagePath>Assets\2.jpg</PackagePath>
       <Modified>2017-04-01T03:44:36.451</Modified>
@@ -569,11 +573,11 @@
     <AppxPackagedFile Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\resources.pri">
       <PackagePath>resources.pri</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2017-04-02T23:05:38.866</Modified>
+      <Modified>2017-04-02T23:08:52.356</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\Core\3DEngine.exe">
       <PackagePath>3DEngine.exe</PackagePath>
-      <Modified>2017-04-02T23:05:39.047</Modified>
+      <Modified>2017-04-02T23:09:12.763</Modified>
     </AppxPackagedFile>
   </ItemGroup>
   <ItemGroup>

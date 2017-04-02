@@ -93,6 +93,8 @@
     <Content Include="Suzanne.babylon">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Suzanne.jpg" />
+    <None Include="monkey.babylon" />
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
