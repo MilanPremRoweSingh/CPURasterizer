@@ -173,7 +173,11 @@ namespace _3DEngine
                     var x = (float)vertArray[vI * vStep].Value;
                     var y = (float)vertArray[vI * vStep + 1].Value;
                     var z = (float)vertArray[vI * vStep + 2].Value;
-                    mesh.Verts[vI] = new Vector3(x, y, z);
+                    // Loading the vertex normal exported by Blender
+                    var nx = (float)vertArray[vI * vStep + 3].Value;
+                    var ny = (float)vertArray[vI * vStep + 4].Value;
+                    var nz = (float)vertArray[vI * vStep + 5].Value;
+                    mesh.Verts[vI] = new Vertex { Coords = new Vector3(x, y, z), Normal = new Vector3(nx, ny, nz) };
                 }
 
                 for (var fI = 0; fI < facesCount; fI++)
