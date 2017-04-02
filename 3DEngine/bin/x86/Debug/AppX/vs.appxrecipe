@@ -28,13 +28,13 @@
     <AppXManifest Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\Core\AppxManifest.xml">
       <PackagePath>AppxManifest.xml</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2017-04-02T16:27:04.006</Modified>
+      <Modified>2017-04-02T16:59:01.499</Modified>
     </AppXManifest>
   </ItemGroup>
   <ItemGroup>
     <AppxPackagedFile Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\3DEngine.exe">
       <PackagePath>entrypoint\3DEngine.exe</PackagePath>
-      <Modified>2017-04-02T16:27:03.770</Modified>
+      <Modified>2017-04-02T16:59:01.274</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\Milan\.nuget\packages\Microsoft.CSharp\4.3.0\lib\netcore50\Microsoft.CSharp.dll">
       <PackagePath>Microsoft.CSharp.dll</PackagePath>
@@ -514,7 +514,7 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\Suzanne.babylon">
       <PackagePath>Suzanne.babylon</PackagePath>
-      <Modified>2017-04-02T16:00:37.814</Modified>
+      <Modified>2017-04-02T16:42:03.228</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\Assets\2.jpg">
       <PackagePath>Assets\2.jpg</PackagePath>
@@ -569,11 +569,11 @@
     <AppxPackagedFile Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\resources.pri">
       <PackagePath>resources.pri</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2017-04-02T16:19:30.128</Modified>
+      <Modified>2017-04-02T16:54:18.341</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Users\Milan\Documents\Visual Studio 2017\Projects\3DEngine\3DEngine\bin\x86\Debug\Core\3DEngine.exe">
       <PackagePath>3DEngine.exe</PackagePath>
-      <Modified>2017-04-02T16:27:04.003</Modified>
+      <Modified>2017-04-02T16:59:01.494</Modified>
     </AppxPackagedFile>
   </ItemGroup>
   <ItemGroup>
