@@ -46,8 +46,15 @@ namespace _3DEngine
         }
 
         // Rendering loop handler
+        DateTime previousDate;
         void CompositionTarget_Rendering(object sender, object e)
-        {
+        { 
+            var now = DateTime.Now;
+            var currentFps = 1000.0 / (now - previousDate).TotalMilliseconds;
+            previousDate = now;
+
+            fps.Text = string.Format("{0:0.00} fps", currentFps);
+
             device.Clear(0, 0, 0, 255);
 
             foreach (var mesh in meshes)
