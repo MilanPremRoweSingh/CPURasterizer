@@ -71,13 +71,14 @@ namespace _3DEngine
             {
                 Coords = new Vector3(x, y, point2D.Z),
                 Normal = normal3dWorld,
-                WorldCoords = point3dWorld
+                WorldCoords = point3dWorld,
+                TextureCoords = vert.TextureCoords
             };
         }
 
         public void PutPixel(int x, int y, float z, Color4 colour)
         {
-            var i = (x + y * rendW) ; //Calculate index in bkpBuff of (x,y)
+            var i = (x + y * rendW); //Calculate index in bkpBuff of (x,y)
             lock (lockBuffer[i]) //Ensures we don't edit a pixel with the same i (i.e. position i.e. the same pixel in our Parallel for)
             {
                 if (zBuffer[i] < z)
@@ -120,24 +121,24 @@ namespace _3DEngine
                                                            * Matrix.Translation(curr.Pos);
                 var transformMat = worldMat * viewMat * projMat; //Create world -> projection matrix
                 Parallel.For(0, curr.Faces.Length, faceIndex =>
-               {
-                   var face = curr.Faces[faceIndex];
-                   var vertexA = curr.Verts[face.A];
-                   var vertexB = curr.Verts[face.B];
-                   var vertexC = curr.Verts[face.C];
+                {
+                    var face = curr.Faces[faceIndex];
+                    var vertexA = curr.Verts[face.A];
+                    var vertexB = curr.Verts[face.B];
+                    var vertexC = curr.Verts[face.C];
 
-                   var pixelA = ProjectTo2D(vertexA, transformMat, worldMat);
-                   var pixelB = ProjectTo2D(vertexB, transformMat, worldMat);
-                   var pixelC = ProjectTo2D(vertexC, transformMat, worldMat);
+                    var pixelA = ProjectTo2D(vertexA, transformMat, worldMat);
+                    var pixelB = ProjectTo2D(vertexB, transformMat, worldMat);
+                    var pixelC = ProjectTo2D(vertexC, transformMat, worldMat);
 
-                   var color = 0.0001f;
-                   RasterizeTriangle(pixelA, pixelB, pixelC, new Color4(color, color, color, 1));
-                   faceIndex++;
-               });
+                    var color = 0.1f;
+                    RasterizeTriangle(pixelA, pixelB, pixelC, new Color4(color, color, color, 1), curr.Texture);
+                    faceIndex++;
+                });
             }
         }
 
-        public void RasterizeTriangle(Vertex vA, Vertex vB, Vertex vC, Color4 colour)
+        public void RasterizeTriangle(Vertex vA, Vertex vB, Vertex vC, Color4 colour, Texture texture)
         {
             //We want pA to be on top (lowest Y), and pA.y < pB.Y <  pC.Y
             if (vA.Coords.Y > vB.Coords.Y) //Swap vectors if vB is higher
@@ -172,12 +173,12 @@ namespace _3DEngine
             //Vector3 vNormFace = ((vA.Normal + vB.Normal + vC.Normal) / 3); //Face normal is average of 3 vertex normals
             //Vector3 faceCentre = ((vA.WorldCoords + vB.WorldCoords + vC.WorldCoords) / 3); //Middle point of face is avg of 3 vertex word pos
 
-            Vector3 lightPos = new Vector3(0, -10, 10); //Light position
+            Vector3 lightPos = new Vector3(0, -10, 0); //Light position
             //Compute the cosing of angles between vertex normals and light
             float vnlA = ComputeNDotL(vA.WorldCoords, vA.Normal, lightPos);
             float vnlB = ComputeNDotL(vB.WorldCoords, vB.Normal, lightPos);
             float vnlC = ComputeNDotL(vC.WorldCoords, vC.Normal, lightPos);
-            var data = new ScanLineData {};
+            var data = new ScanLineData { };
 
             float dPAPB, dPAPC;
 
@@ -203,7 +204,7 @@ namespace _3DEngine
             {
                 //Handle case where PB is on the left
                 for (var y = (int)pA.Y; y <= (int)pC.Y; y++)
-                { 
+                {
                     data.currentY = y;
                     if (y < pB.Y)
                     {
@@ -211,8 +212,19 @@ namespace _3DEngine
                         data.ndotlb = vnlC;
                         data.ndotlc = vnlA;
                         data.ndotld = vnlB;
+
+
+                        data.ua = vA.TextureCoords.X;
+                        data.ub = vC.TextureCoords.X;
+                        data.uc = vA.TextureCoords.X;
+                        data.ud = vB.TextureCoords.X;
+
+                        data.va = vA.TextureCoords.Y;
+                        data.vb = vC.TextureCoords.Y;
+                        data.vc = vA.TextureCoords.Y;
+                        data.vd = vB.TextureCoords.Y;
                         //Draw scan line in first half of triangle
-                        DrawScanLine(vA, vC, vA, vB, colour, data);
+                        DrawScanLine(vA, vC, vA, vB, colour, data, texture);
                     }
                     else
                     {
@@ -220,8 +232,19 @@ namespace _3DEngine
                         data.ndotlb = vnlC;
                         data.ndotlc = vnlB;
                         data.ndotld = vnlC;
+
+
+                        data.ua = vA.TextureCoords.X;
+                        data.ub = vC.TextureCoords.X;
+                        data.uc = vB.TextureCoords.X;
+                        data.ud = vC.TextureCoords.X;
+
+                        data.va = vA.TextureCoords.Y;
+                        data.vb = vC.TextureCoords.Y;
+                        data.vc = vB.TextureCoords.Y;
+                        data.vd = vC.TextureCoords.Y;
                         //Draw scan line in second half of triangle
-                        DrawScanLine(vA, vC, vB, vC, colour, data);
+                        DrawScanLine(vA, vC, vB, vC, colour, data, texture);
                     }
                 }
 
@@ -238,8 +261,18 @@ namespace _3DEngine
                         data.ndotlb = vnlB;
                         data.ndotlc = vnlA;
                         data.ndotld = vnlC;
+
+                        data.ua = vA.TextureCoords.X;
+                        data.ub = vB.TextureCoords.X;
+                        data.uc = vA.TextureCoords.X;
+                        data.ud = vC.TextureCoords.X;
+
+                        data.va = vA.TextureCoords.Y;
+                        data.vb = vB.TextureCoords.Y;
+                        data.vc = vA.TextureCoords.Y;
+                        data.vd = vC.TextureCoords.Y;
                         //Draw scan line in first half of triangle
-                        DrawScanLine(vA, vB, vA, vC, colour, data);
+                        DrawScanLine(vA, vB, vA, vC, colour, data, texture);
                     }
                     else
                     {
@@ -247,14 +280,24 @@ namespace _3DEngine
                         data.ndotlb = vnlC;
                         data.ndotlc = vnlA;
                         data.ndotld = vnlC;
+
+                        data.ua = vB.TextureCoords.X;
+                        data.ub = vC.TextureCoords.X;
+                        data.uc = vA.TextureCoords.X;
+                        data.ud = vC.TextureCoords.X;
+
+                        data.va = vB.TextureCoords.Y;
+                        data.vb = vC.TextureCoords.Y;
+                        data.vc = vA.TextureCoords.Y;
+                        data.vd = vC.TextureCoords.Y;
                         //Draw scan line in second half of triangle
-                        DrawScanLine(vB, vC, vA, vC, colour, data);
+                        DrawScanLine(vB, vC, vA, vC, colour, data, texture);
                     }
                 }
             }
         }
 
-        public void DrawScanLine(Vertex vLA, Vertex vLB, Vertex vRA, Vertex vRB, Color4 colour, ScanLineData data)
+        public void DrawScanLine(Vertex vLA, Vertex vLB, Vertex vRA, Vertex vRB, Color4 colour, ScanLineData data, Texture texture)
         {
             Vector3 pLA = vLA.Coords;
             Vector3 pLB = vLB.Coords;
@@ -266,24 +309,48 @@ namespace _3DEngine
             var gradL = pLA.Y != pLB.Y ? (data.currentY - pLA.Y) / (pLB.Y - pLA.Y) : 1; //How far down Left line is our y?
             var gradR = pRA.Y != pRB.Y ? (data.currentY - pRA.Y) / (pRB.Y - pRA.Y) : 1; //How far down Right line is our y?
 
-            startX = (int)(pLA.X + ((pLB.X - pLA.X) * (Math.Max(0, Math.Min(gradL, 1)))));
-            endX = (int)(pRA.X + ((pRB.X - pRA.X) * (Math.Max(0, Math.Min(gradR, 1)))));
+            //Interpolate Xs
+            startX = (int)Interpolate(pLA.X, pLB.X, gradL);
+            endX = (int)Interpolate(pRA.X, pRB.X, gradR);
 
-            float z1 = (pLA.Z + ((pLB.Z - pLA.Z) * (Math.Max(0, Math.Min(gradL, 1)))));
-            float z2 = (pRA.Z + ((pRB.Z - pRA.Z) * (Math.Max(0, Math.Min(gradR, 1)))));
+            //Interpolate Zs
+            float z1 = Interpolate(pLA.Z, pLB.Z, gradL);
+            float z2 = Interpolate(pRA.Z, pRB.Z, gradR);
 
-            var startLN = (data.ndotla + ((data.ndotlb - data.ndotla) * (Math.Max(0, Math.Min(gradL, 1)))));
-            var endLN = (data.ndotlc + ((data.ndotld - data.ndotlc) * (Math.Max(0, Math.Min(gradR, 1)))));
+            //Interpolate normals
+            var startLN = Interpolate(data.ndotla, data.ndotlb, gradL);
+            var endLN = Interpolate(data.ndotlc, data.ndotld, gradR);
+
+            //Interpolate starting and ending U,V 
+            var startU = Interpolate(data.ua, data.ub, gradL);
+            var endU = Interpolate(data.uc, data.ud, gradR);
+            var startV = Interpolate(data.va, data.vb, gradL);
+            var endV = Interpolate(data.vc, data.vd, gradR);
 
             for (var currX = startX; currX < endX; currX++)
             {
-                float gradZ = (float)((currX - startX) / (float)(endX - startX));
-                var currZ = (z1 + ((z2 - z1) * (Math.Max(0, Math.Min(gradZ, 1)))));
+                float grad = (float)((currX - startX) / (float)(endX - startX));
+                var currZ = Interpolate(z1, z2, grad);
 
-                var ndotl = (startLN + ((endLN - startLN) * (Math.Max(0, Math.Min(gradZ, 1)))));
+                var ndotl = Interpolate(startLN, endLN, grad);
 
-                DrawPoint(new Vector3(currX, data.currentY, currZ), colour*ndotl);
+                var u = Interpolate(startU, endU, grad);
+                var v = Interpolate(startV, endV, grad);
+
+                Color4 textureColor;
+
+                if (texture != null)
+                    textureColor = texture.Map(u, v);
+                else
+                    textureColor = new Color4(0.01f, 0.01f, 0.01f, 1);
+
+                DrawPoint(new Vector3(currX, data.currentY, currZ), colour * textureColor * ndotl);
             }
+        }
+
+        float Interpolate(float min, float max, float gradient)
+        {
+            return min + (max - min) * (Math.Max(0, Math.Min(gradient, 1)));
         }
 
         public float ComputeNDotL(Vector3 vert, Vector3 norm, Vector3 lightPos)
@@ -292,16 +359,29 @@ namespace _3DEngine
 
             norm.Normalize(); //Normalise normal
             lightDir.Normalize(); //Normalise lightDir
-
-            return Math.Max(0, Vector3.Dot(norm, lightDir)); //Compute Dot and return
+            var dot = Vector3.Dot(norm, lightDir);
+            return Math.Max(0, dot); //Compute Dot and return
         }
 
         public async Task<Mesh[]> LoadJSONFileAsync(string fileName) //Async allows await; This will load / parse the JSON file
         {
             var meshes = new List<Mesh>();
+            var materials = new Dictionary<String, Material>();
             var file = await Windows.ApplicationModel.Package.Current.InstalledLocation.GetFileAsync(fileName);
             var data = await Windows.Storage.FileIO.ReadTextAsync(file);
             dynamic jsonObject = Newtonsoft.Json.JsonConvert.DeserializeObject(data);
+
+            for (var materialIndex = 0; materialIndex < jsonObject.materials.Count; materialIndex++)
+            {
+                var material = new Material();
+                material.Name = jsonObject.materials[materialIndex].name.Value;
+                material.ID = jsonObject.materials[materialIndex].id.Value;
+                if (jsonObject.materials[materialIndex].diffuseTexture != null)
+                    material.DiffuseTextureName = jsonObject.materials[materialIndex].diffuseTexture.name.Value;
+
+                materials.Add(material.ID, material);
+            }
+
 
             for (var mI = 0; mI < jsonObject.meshes.Count; mI++)
             {
@@ -341,7 +421,17 @@ namespace _3DEngine
                     var ny = (float)vertArray[vI * vStep + 4].Value;
                     var nz = (float)vertArray[vI * vStep + 5].Value;
                     mesh.Verts[vI] = new Vertex { Coords = new Vector3(x, y, z), Normal = new Vector3(nx, ny, nz) };
+
+                    if (uvCount > 0)
+                    {
+                        // Loading the texture coordinates
+                        float u = (float)vertArray[vI * vStep + 6].Value;
+                        float v = (float)vertArray[vI * vStep + 7].Value;
+                        mesh.Verts[vI].TextureCoords = new Vector2(u, v);
+                    }
                 }
+
+
 
                 for (var fI = 0; fI < facesCount; fI++)
                 {
@@ -351,8 +441,18 @@ namespace _3DEngine
                     mesh.Faces[fI] = new Face { A = a, B = b, C = c };
                 }
 
+
                 var pos = jsonObject.meshes[mI].position;
                 mesh.Pos = new Vector3((float)pos[0].Value, (float)pos[1].Value, (float)pos[2].Value);
+
+
+                if (uvCount > 0)
+                {
+                    // Texture
+                    var meshTextureID = jsonObject.meshes[mI].materialId.Value;
+                    var meshTextureName = materials[meshTextureID].DiffuseTextureName;
+                    mesh.Texture = new Texture(meshTextureName, 512, 512);
+                }
                 meshes.Add(mesh);
             }
             return meshes.ToArray();

@@ -3,7 +3,7 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.UI.Xaml.Media.Imaging;
 using SharpDX;
 
-namespace SoftEngine
+namespace _3DEngine
 {
     public class Texture
     {
