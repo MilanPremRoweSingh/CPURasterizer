@@ -1,6 +1,6 @@
 #3D Engine
 
-This project is a basic 3D engine coded in C# for Windows 10, which displays models imported from blender using Babylon.js (JSON). All calculations are done with the CPU, without the use of extra libraries, with the exception of SharpDX which was used for a the Matrix, Vector and Color data structures. I decided to do this with only the CPU so I could develop a better understanding of rasterization, lighting/shading (I used Gouraud shading) and texture mapping.
+This project is a basic 3D engine coded in C# for Windows 10, which displays models imported from blender using Babylon.js (JSON). All calculations are done with the CPU, without the use of extra libraries, with the exception of SharpDX which was used for a the Matrix, Vector and Color data structures. I decided to do this with only the CPU so I could develop a better understanding of rasterization, lighting/shading (I used Gouraud shading), texture mapping and 3D Graphics Programming in general.
 
 #Building
 
